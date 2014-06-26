@@ -11,19 +11,25 @@ class RedditApp(tk.Frame):
         self.grid()
         self.createWidgets()
         
-        # Make a connection to reddit and get the user
-        self.r = praw.Reddit(user_agent='Reddit App made by Aodh')
-        self.user = self.r.get_redditor('Unidan')         
+        # Make a connection to reddit
+        self.r = praw.Reddit(user_agent='Reddit App made by Aodh')    
 
     def createWidgets(self):
         self.quitButton = tk.Button(self, text='Quit', command=self.quit)
         self.quitButton.grid(column=1)
         
-        self.label1 = tk.Label(self, text='Label')
-        self.label1.bind('<Button-1>', self.setupUserData)
-        self.label1.grid()
+        self.usernameInput = tk.Entry(self);
+        self.usernameInput.insert(0, 'Type Username Here');
+        self.usernameInput.grid(column=2)
+        
+        self.button = tk.Button(self, text='Login')
+        self.button.bind('<Button-1>', self.setupUserData)
+        self.button.grid(column=3)
 
-    def setupUserData(self, event):  
+    def setupUserData(self, event): 
+        username = self.usernameInput.get()
+        self.user = self.r.get_redditor(username)
+        
         gen = self.user.get_submitted(limit=5)
         for x in gen:
             print x
