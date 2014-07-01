@@ -1,2 +1,2 @@
-RedditApp
+Hearthstone Deck Builder
 =========
