@@ -21,7 +21,7 @@ class HSDeckBuilder(Frame):
         
         #Create Card Holders
         for x in range(1, Config.MAX_ROWS_PER_PAGE+1):
-            for y in range(0, Config.MAX_CARDS_PER_ROW):
+            for y in range(1, Config.MAX_CARDS_PER_ROW+1):
                 frame = LabelFrame(width=Config.CARD_WIDTH, height=Config.CARD_HEIGHT)
                 frame.grid_propagate(False)
                 frame.grid(column=y, row=x)
@@ -29,38 +29,52 @@ class HSDeckBuilder(Frame):
                 card_holder.grid()
                 self.card_holder_list.append(card_holder)
         
+        
         #Create Hero Buttons
+        button_frame = LabelFrame()
+        button_frame.grid(row=0, column=1, columnspan=Config.MAX_CARDS_PER_ROW)
         for x, hero in enumerate(Config.HERO_CLASSES):
-            button = Button(text=hero, image=None)
-            button.grid(column=x, row=0)
+            button = Button(button_frame, text=hero, image=None)
+            button.grid(column=x+1, row=0)
             def handler(event, session=session, cards=cards, hero=hero):
                 self.current_hero = hero
-                self.current_page = 0
+                self.current_page = 1
                 return self.display_cards(event, session, cards)
             button.bind('<Button-1>', handler)
+    
+        self.create_next_button(session, cards)
+        self.create_back_button(session, cards)
         
-        #Create Next Button
-        button = Button(text='Next')
-        button.grid(column=9,row=2)
+    def create_next_button(self, session, cards):
+        button = Button(text='Next', height=20)
+        button.grid(column=9,row=1, rowspan=2)
         def handler(event, session=session, cards=cards):
-            if self.current_page >= Config.MAX_PAGES-1:
-                return
-            self.current_page = self.current_page+1
+            if self.current_page >= Config.MAX_PAGES:
+                hero_index = Config.HERO_CLASSES.index(self.current_hero)
+                if (hero_index < len(Config.HERO_CLASSES)-1):
+                    self.current_hero = Config.HERO_CLASSES[hero_index+1]
+                    self.current_page = 1
+            else:
+                self.current_page = self.current_page+1
             return self.display_cards(event, session, cards)
         button.bind('<Button-1>', handler)
         
-        #Create Back Button
-        button = Button(text='Back')
-        button.grid(column=8,row=2)
+    def create_back_button(self, session, cards):
+        button = Button(text='Back', height=20)
+        button.grid(column=0,row=1, rowspan=2)
         def handler(event, session=session, cards=cards):
-            if self.current_page <= 0:
-                return
-            self.current_page = self.current_page-1
+            if self.current_page <= 1:
+                hero_index = Config.HERO_CLASSES.index(self.current_hero)
+                if (hero_index > 0):
+                    self.current_hero = Config.HERO_CLASSES[hero_index-1]
+                    self.current_page = Config.MAX_PAGES
+            else:
+                self.current_page = self.current_page-1
             return self.display_cards(event, session, cards)
         button.bind('<Button-1>', handler)
         
     def display_cards(self, event, session, cards):
-        cards = cards[self.current_hero][Config.MAX_CARDS_PER_PAGE*self.current_page:]
+        cards = cards[self.current_hero][Config.MAX_CARDS_PER_PAGE*(self.current_page-1):]
         num_cards = len(cards)
         if num_cards > Config.MAX_CARDS_PER_PAGE:
             cards_to_display = Config.MAX_CARDS_PER_PAGE
