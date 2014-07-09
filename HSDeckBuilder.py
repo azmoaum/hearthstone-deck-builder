@@ -8,6 +8,7 @@ import json
 import sys
 import os
 import Config
+from CardHolder import CardHolder
 class HSDeckBuilder(Frame):
     def __init__(self, session, master=None):
         Frame.__init__(self, master)
@@ -22,13 +23,8 @@ class HSDeckBuilder(Frame):
         #Create Card Holders
         for x in range(1, Config.MAX_ROWS_PER_PAGE+1):
             for y in range(1, Config.MAX_CARDS_PER_ROW+1):
-                frame = LabelFrame(width=Config.CARD_WIDTH, height=Config.CARD_HEIGHT)
-                frame.grid_propagate(False)
-                frame.grid(column=y, row=x)
-                card_holder = Label(frame, image=None)
-                card_holder.grid()
+                card_holder = CardHolder(master=self.master, column=y, row=x, width=Config.CARD_WIDTH, height=Config.CARD_HEIGHT)
                 self.card_holder_list.append(card_holder)
-        
         
         #Create Hero Buttons
         button_frame = LabelFrame()
@@ -46,7 +42,7 @@ class HSDeckBuilder(Frame):
         self.create_back_button(session, cards)
         
     def create_next_button(self, session, cards):
-        button = Button(text='Next', height=20)
+        button = Button(text='Next', height=30)
         button.grid(column=9,row=1, rowspan=2)
         def handler(event, session=session, cards=cards):
             if self.current_page >= Config.MAX_PAGES:
@@ -60,7 +56,7 @@ class HSDeckBuilder(Frame):
         button.bind('<Button-1>', handler)
         
     def create_back_button(self, session, cards):
-        button = Button(text='Back', height=20)
+        button = Button(text='Back', height=30)
         button.grid(column=0,row=1, rowspan=2)
         def handler(event, session=session, cards=cards):
             if self.current_page <= 1:
@@ -88,8 +84,8 @@ class HSDeckBuilder(Frame):
                 self.display_card('', holder_num)
         
     def display_card(self, card_image, holder_num):
-        self.card_holder_list[holder_num].config(image = card_image)
-        self.card_holder_list[holder_num].image = card_image
+        self.card_holder_list[holder_num].card_holder.config(image = card_image)
+        self.card_holder_list[holder_num].card_holder.image = card_image
     
 def load_cards(session):
     cards = {}
