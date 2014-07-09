@@ -9,6 +9,7 @@ import sys
 import os
 import Config
 from CardHolder import CardHolder
+
 class HSDeckBuilder(Frame):
     def __init__(self, session, master=None):
         Frame.__init__(self, master)
@@ -24,6 +25,9 @@ class HSDeckBuilder(Frame):
         for x in range(1, Config.MAX_ROWS_PER_PAGE+1):
             for y in range(1, Config.MAX_CARDS_PER_ROW+1):
                 card_holder = CardHolder(master=self.master, column=y, row=x, width=Config.CARD_WIDTH, height=Config.CARD_HEIGHT)
+                def handler(event, card_holder=card_holder):
+                   return self.set_card(event, card_holder)
+                card_holder.card.bind('<Button-1>', handler)
                 self.card_holder_list.append(card_holder)
         
         #Create Hero Buttons
@@ -40,6 +44,9 @@ class HSDeckBuilder(Frame):
     
         self.create_next_button(session, cards)
         self.create_back_button(session, cards)
+        
+    def set_card(self, event, card_holder):
+        print card_holder.card.id
         
     def create_next_button(self, session, cards):
         button = Button(text='Next', height=30)
@@ -80,12 +87,13 @@ class HSDeckBuilder(Frame):
         for holder_num in range(0, Config.MAX_CARDS_PER_PAGE):
             if holder_num < cards_to_display:
                 self.display_card(cards[holder_num]['image'], holder_num) 
+                self.card_holder_list[holder_num].card.id = cards[holder_num]['name']
             else:
                 self.display_card('', holder_num)
         
     def display_card(self, card_image, holder_num):
-        self.card_holder_list[holder_num].card_holder.config(image = card_image)
-        self.card_holder_list[holder_num].card_holder.image = card_image
+        self.card_holder_list[holder_num].card.config(image = card_image)
+        self.card_holder_list[holder_num].card.image = card_image
     
 def load_cards(session):
     cards = {}
