@@ -6,4 +6,4 @@ class CardHolder(LabelFrame):
         LabelFrame.__init__(self, master=master, width=width, height=height, image=image)
         self.grid_propagate(False)
         self.grid(column=column, row=row)
-        self.card = Card(master=self, image=None)
+        self.card = Card(master=self, image=image)

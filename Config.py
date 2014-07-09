@@ -1,4 +1,4 @@
-HERO_CLASSES = ['Druid']#, 'Mage', 'Warlock', 'Hunter', 'Priest', 'Paladin', 'Rogue', 'Shaman', 'Warrior']
+HERO_CLASSES = ['Druid', 'Mage', 'Warlock', 'Hunter', 'Priest', 'Paladin', 'Rogue', 'Shaman', 'Warrior']
 
 CARD_SETS = ['Basic', 'Expert']
 

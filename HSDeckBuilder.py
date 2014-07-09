@@ -19,39 +19,35 @@ class HSDeckBuilder(Frame):
         
     def create_widgets(self, session):
         self.card_holder_list = []
-        cards = load_cards(session)
+        #card_dict = Dictionary of hero classes with their associated card lists
+        card_dict = load_cards(session)
         
         #Create Card Holders
         for x in range(1, Config.MAX_ROWS_PER_PAGE+1):
             for y in range(1, Config.MAX_CARDS_PER_ROW+1):
-                card_holder = CardHolder(master=self.master, column=y, row=x, width=Config.CARD_WIDTH, height=Config.CARD_HEIGHT)
+                card_holder = CardHolder(master=self.master, column=y, row=x, 
+                    width=Config.CARD_WIDTH, height=Config.CARD_HEIGHT)
                 def handler(event, card_holder=card_holder):
                    return self.set_card(event, card_holder)
                 card_holder.card.bind('<Button-1>', handler)
                 self.card_holder_list.append(card_holder)
         
         #Create Hero Buttons
-        button_frame = LabelFrame()
+        button_frame = LabelFrame(master=self.master)
         button_frame.grid(row=0, column=1, columnspan=Config.MAX_CARDS_PER_ROW)
         for x, hero in enumerate(Config.HERO_CLASSES):
             button = Button(button_frame, text=hero, image=None)
             button.grid(column=x+1, row=0)
-            def handler(event, session=session, cards=cards, hero=hero):
+            def handler(event, card_dict=card_dict, hero=hero):
                 self.current_hero = hero
                 self.current_page = 1
-                return self.display_cards(event, session, cards)
+                return self.display_cards(event, card_dict)
             button.bind('<Button-1>', handler)
-    
-        self.create_next_button(session, cards)
-        self.create_back_button(session, cards)
-        
-    def set_card(self, event, card_holder):
-        print card_holder.card.id
-        
-    def create_next_button(self, session, cards):
-        button = Button(text='Next', height=30)
+
+        #Create Next Button
+        button = Button(master=self.master, text='Next', height=35)
         button.grid(column=9,row=1, rowspan=2)
-        def handler(event, session=session, cards=cards):
+        def handler(event, card_dict=card_dict):
             if self.current_page >= Config.MAX_PAGES:
                 hero_index = Config.HERO_CLASSES.index(self.current_hero)
                 if (hero_index < len(Config.HERO_CLASSES)-1):
@@ -59,13 +55,13 @@ class HSDeckBuilder(Frame):
                     self.current_page = 1
             else:
                 self.current_page = self.current_page+1
-            return self.display_cards(event, session, cards)
+            return self.display_cards(event, card_dict)
         button.bind('<Button-1>', handler)
         
-    def create_back_button(self, session, cards):
-        button = Button(text='Back', height=30)
+        #Create Back Button
+        button = Button(master=self.master, text='Back', height=35)
         button.grid(column=0,row=1, rowspan=2)
-        def handler(event, session=session, cards=cards):
+        def handler(event, card_dict=card_dict):
             if self.current_page <= 1:
                 hero_index = Config.HERO_CLASSES.index(self.current_hero)
                 if (hero_index > 0):
@@ -73,21 +69,23 @@ class HSDeckBuilder(Frame):
                     self.current_page = Config.MAX_PAGES
             else:
                 self.current_page = self.current_page-1
-            return self.display_cards(event, session, cards)
+            return self.display_cards(event, card_dict)
         button.bind('<Button-1>', handler)
         
-    def display_cards(self, event, session, cards):
-        cards = cards[self.current_hero][Config.MAX_CARDS_PER_PAGE*(self.current_page-1):]
-        num_cards = len(cards)
-        if num_cards > Config.MAX_CARDS_PER_PAGE:
-            cards_to_display = Config.MAX_CARDS_PER_PAGE
-        else:
-            cards_to_display = num_cards
-            
+    def display_cards(self, event, card_dict):
+        #card_data = List of cards to display depending on the current hero and page
+        card_list = card_dict[self.current_hero][Config.MAX_CARDS_PER_PAGE*(self.current_page-1):]
+        num_cards_to_display = len(card_list)
+        if num_cards_to_display > Config.MAX_CARDS_PER_PAGE:
+            num_cards_to_display = Config.MAX_CARDS_PER_PAGE
+        
+        #For each card_holder, decide if a card should be displayed
+        #If there are less cards to display then card holders, than
+        #blank images will fill those card holders
         for holder_num in range(0, Config.MAX_CARDS_PER_PAGE):
-            if holder_num < cards_to_display:
-                self.display_card(cards[holder_num]['image'], holder_num) 
-                self.card_holder_list[holder_num].card.id = cards[holder_num]['name']
+            if holder_num < num_cards_to_display:
+                self.card_holder_list[holder_num].card.id = card_list[holder_num]['name']
+                self.display_card(card_list[holder_num]['image'], holder_num) 
             else:
                 self.display_card('', holder_num)
         
@@ -95,8 +93,11 @@ class HSDeckBuilder(Frame):
         self.card_holder_list[holder_num].card.config(image = card_image)
         self.card_holder_list[holder_num].card.image = card_image
     
+    def set_card(self, event, card_holder):
+        print card_holder.card.id
+        
 def load_cards(session):
-    cards = {}
+    card_dict = {}
     card_list = []
     
     #Read in the card data from json file
@@ -132,12 +133,12 @@ def load_cards(session):
                         card_list.append(card)
                 
         card_list.sort(key=lambda x:(x['cost'], x['name']))
-        cards[hero] = card_list[:]
+        card_dict[hero] = card_list[:]
         #for card in cards[hero]:
         #    print card['name'], ' ', card['id']
         card_list[:] = []
     print 'Finished loading cards'   
-    return cards
+    return card_dict
     
 #Main application entry point
 def main():
