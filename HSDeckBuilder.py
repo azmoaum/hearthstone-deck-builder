@@ -8,9 +8,11 @@ import json
 import sys
 import os
 import Config
-from CardHolder import CardHolder
+from MainWidgets import CardHolder, Card
 
 class HSDeckBuilder(Frame):
+
+
     def __init__(self, session, master=None):
         Frame.__init__(self, master)
         self.master.title('HSDeckBuilder')
@@ -26,7 +28,7 @@ class HSDeckBuilder(Frame):
         for x in range(1, Config.MAX_ROWS_PER_PAGE+1):
             for y in range(1, Config.MAX_CARDS_PER_ROW+1):
                 card_holder = CardHolder(master=self.master, column=y, row=x, 
-                    width=Config.CARD_WIDTH, height=Config.CARD_HEIGHT)
+                                        width=Config.CARD_WIDTH, height=Config.CARD_HEIGHT)
                 def handler(event, card_holder=card_holder):
                    return self.set_card(event, card_holder)
                 card_holder.card.bind('<Button-1>', handler)
