@@ -1,4 +1,4 @@
-HERO_CLASSES = ['Druid', 'Mage', 'Warlock', 'Hunter', 'Priest', 'Paladin', 'Rogue', 'Shaman', 'Warrior']
+HERO_CLASSES = ['Druid', 'Mage', 'Warlock']#, 'Hunter', 'Priest', 'Paladin', 'Rogue', 'Shaman', 'Warrior']
 
 CARD_SETS = ['Basic', 'Expert']
 
@@ -18,5 +18,5 @@ MAX_CARDS_PER_PAGE = MAX_CARDS_PER_ROW*MAX_ROWS_PER_PAGE
 
 MAX_PAGES = 3
 
-CARD_WIDTH = 200
-CARD_HEIGHT = 304
+CARD_FRAME_WIDTH = 200
+CARD_FRAME_HEIGHT = 304
