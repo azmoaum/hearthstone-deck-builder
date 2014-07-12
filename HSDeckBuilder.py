@@ -1,10 +1,8 @@
 #!/usr/bin/env python
 
 import json
-import sys
-import os
 import Config
-from MainWidgets import HeroButtonsFrame, CardsFrame, CardLabel
+from MainWidgets import HeroButtonsFrame, CardsFrame, DeckFrame, DeckLabel, CardLabel
 from Tkinter import Frame, Button
 from requests import Session
 from PIL import Image, ImageTk
@@ -20,24 +18,35 @@ class HSDeckBuilder(Frame):
         #card_dict = Dictionary of hero classes with their associated card lists
         card_dict = load_cards(session)
         self.create_widgets(card_dict)
+        self.display_card_images(card_dict)
         
     def create_widgets(self, card_dict):
         #Create CardsFrame
         self.cards_frame = CardsFrame(master=self.master, 
-                                      width=Config.CARD_FRAME_WIDTH*Config.MAX_CARDS_PER_ROW,
-                                      height=Config.CARD_FRAME_HEIGHT*Config.MAX_ROWS_PER_PAGE)
+                                      width=Config.CARD_LABEL_WIDTH*Config.MAX_CARDS_PER_ROW,
+                                      height=Config.CARD_LABEL_HEIGHT*Config.MAX_ROWS_PER_PAGE)
         self.cards_frame.grid_propagate(False)
         self.cards_frame.grid(column=1, row=1)
         
         #Add Cards to CardsFrame
         for x in range(1, Config.MAX_ROWS_PER_PAGE+1):
             for y in range(1, Config.MAX_CARDS_PER_ROW+1):
-                card_label = CardLabel(self.cards_frame, image=None)
+                card_label = CardLabel(master=self.cards_frame, image=None)
                 def handler(event, card_label=card_label):
                    return self.add_to_deck(event, card_label)
                 card_label.bind('<Button-1>', handler)
                 card_label.grid(column=y, row=x)
-        self.card_labels = self.cards_frame.winfo_children()       
+        self.card_labels = self.cards_frame.winfo_children()    
+        
+        #Create DeckFrame
+        self.deck_frame = DeckFrame(master=self.master, 
+                                    width=150,
+                                    height=Config.CARD_LABEL_HEIGHT*2)
+        self.deck_frame.grid_propagate(False)
+        self.deck_frame.grid(column=3, row=1, rowspan=2)
+        
+        self.deck_label = DeckLabel(master=self.deck_frame, image=None)
+        self.deck_label.grid()
                 
         #Create HeroButtonsFrame
         self.hero_buttons = HeroButtonsFrame(master=self.master)
@@ -45,11 +54,11 @@ class HSDeckBuilder(Frame):
         
         #Add buttons to HeroButtonsFrame
         for x, hero in enumerate(Config.HERO_CLASSES):
-            button = Button(self.hero_buttons, text=hero, image=None)
+            button = Button(master=self.hero_buttons, text=hero, image=None)
             def handler(event, card_dict=card_dict, hero=hero):
                 self.cards_frame.hero = hero
                 self.cards_frame.page = 1
-                return self.display_card_images(event, card_dict)
+                return self.display_card_images(card_dict, event)
             button.bind('<Button-1>', handler)
             button.grid(column=x+1, row=0)
         self.hero_buttons = self.hero_buttons.winfo_children()
@@ -64,7 +73,7 @@ class HSDeckBuilder(Frame):
                     self.cards_frame.page = 1                
             else:
                 self.cards_frame.page = self.cards_frame.page+1
-            return self.display_card_images(event, card_dict)
+            return self.display_card_images(card_dict, event)
         self.next_button.bind('<Button-1>', handler)
         self.next_button.grid(column=2,row=1, rowspan=2)
         
@@ -78,11 +87,11 @@ class HSDeckBuilder(Frame):
                     self.cards_frame.page = Config.MAX_PAGES
             else:
                 self.cards_frame.page = self.cards_frame.page-1
-            return self.display_card_images(event, card_dict)
+            return self.display_card_images(card_dict, event)
         self.back_button.bind('<Button-1>', handler)
         self.back_button.grid(column=0,row=1, rowspan=2)
         
-    def display_card_images(self, event, card_dict):
+    def display_card_images(self, card_dict, event=None):
         #card_list=List of cards to display depending on the current hero and page
         card_list = card_dict[self.cards_frame.hero][Config.MAX_CARDS_PER_PAGE*(self.cards_frame.page-1):]
         
@@ -95,7 +104,7 @@ class HSDeckBuilder(Frame):
         #blank images will fill those card labels
         for x in range(0, Config.MAX_CARDS_PER_PAGE):
             if x < cards_to_display:
-                self.card_labels[x].id = card_list[x]['name']
+                self.card_labels[x].name = card_list[x]['name']
                 self.display_card_image(card_list[x]['image'], x) 
             else:
                 self.display_card_image('', x)
@@ -105,7 +114,22 @@ class HSDeckBuilder(Frame):
         self.card_labels[x].image = card_image
     
     def add_to_deck(self, event, card):
-        print card.id
+        if len(self.deck_frame.deck_list) == 30:
+            return
+        
+        labels_text = [l.text for l in self.deck_frame.winfo_children()]
+        if labels_text.count(card.name) == 2:
+            return
+        
+        deck_label = DeckLabel(master=self.deck_frame, image=None, text=card.name)
+        if card.name in self.deck_frame.deck_list:
+           for label in self.deck_frame.winfo_children():
+                if label.text == card.name:
+                    label.config(text=label.text + ' x2')
+        else:
+            deck_label.grid()
+        self.deck_frame.deck_list.append(card.name)    
+        print len(self.deck_frame.deck_list)
         
 def load_cards(session):
     card_dict = {}
@@ -128,16 +152,14 @@ def load_cards(session):
                         url = r'http://wow.zamimg.com/images/hearthstone/cards/enus/original/%s.png' % card['id']
                         response = session.get(url)
                         if response.status_code == 200:
-                            img = Image.open(StringIO(response.content)).resize((Config.CARD_FRAME_WIDTH, 
-                                                                                 Config.CARD_FRAME_HEIGHT),
+                            img = Image.open(StringIO(response.content)).resize((Config.CARD_LABEL_WIDTH, 
+                                                                                 Config.CARD_LABEL_HEIGHT), 
                                                                                  Image.ANTIALIAS)
                             photo_img = ImageTk.PhotoImage(img)
                             card['image'] = photo_img
                             card_list.append(card)
         card_list.sort(key=lambda x:(x['cost'], x['name']))
         card_dict[hero] = card_list[:]
-        #for card in cards[hero]:
-        #    print card['name'], ' ', card['id']
         card_list[:] = []
     print 'Finished loading cards'   
     return card_dict
