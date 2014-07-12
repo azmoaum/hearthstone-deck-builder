@@ -121,7 +121,7 @@ class HSDeckBuilder(Frame):
     
     def add_to_deck(self, event, card):
         deck_labels = self.deck_frame.winfo_children()
-        if len(deck_labels) == 30:
+        if len(deck_labels) == Config.MAX_CARDS_IN_DECK:
             return
         
         card_names = [l.text for l in deck_labels]
@@ -138,10 +138,10 @@ class HSDeckBuilder(Frame):
         self.deck_frame.deck_list.append(card.name)
     
     def save_deck(self, event):
-        if self.deck_frame.deck_list < 30:
+        if self.deck_frame.deck_list < Config.MAX_CARDS_IN_DECK:
             return
         str = ' \n'.join(self.deck_frame.deck_list)
-        with open("Decks.txt", "a") as myFile:
+        with open("..\decks\Decks.txt", "w") as myFile:
             myFile.write(str)
         
         
@@ -150,7 +150,8 @@ def load_cards(session):
     card_list = []
     
     #Read in the card data from json file
-    card_data = open("AllSets.enUS.json").read()
+    
+    card_data = open("..\json\AllSets.enUS.json").read()
     card_data = json.loads(card_data)
 
     for hero in Config.HERO_CLASSES:
