@@ -112,7 +112,7 @@ class HSDeckBuilder(Frame):
         #blank images will fill those card labels
         for x in range(0, Config.MAX_CARDS_PER_PAGE):
             if x < cards_to_display:
-                self.card_labels[x].name = card_list[x]['name']
+                self.card_labels[x].card_name = card_list[x]['name']
                 self.display_card_image(card_list[x]['image'], x) 
             else:
                 self.display_card_image('', x)
@@ -121,27 +121,41 @@ class HSDeckBuilder(Frame):
         self.card_labels[x].config(image = card_image)
         self.card_labels[x].image = card_image
     
-    def add_to_deck(self, event, card):
+    def add_to_deck(self, event, card_label):
+        #deck_labels=List of child widgets of deck_frame
         deck_labels = self.deck_frame.winfo_children()
         if len(deck_labels) == Config.MAX_CARDS_IN_DECK:
             return
-        
-        card_names = [l.text for l in deck_labels]
-        if card_names.count(card.name) == 2:
+        if self.deck_frame.deck_list.count(card_label.card_name) == 2:
             return
         
-        #Create Deck Label
-        #Check if deck already contains card being added. If so,
-        #add "x2" to the label. Otherwise, add the card.
-        deck_label = DeckLabel(master=self.deck_frame, image=None, text=card.name)
-        if card.name in card_names:
-           for label in deck_labels:
-                if label.text == card.name:
-                    label.config(text=label.text + ' x2')
+        #Check if card is already in the deck. If so, loop through
+        #all the deck labels and add 'x2' to the label. Else
+        #create a deck label for the new card
+        if card_label.card_name in self.deck_frame.deck_list:
+           for deck_label in deck_labels:
+                if deck_label.card_name == card_label.card_name:
+                    deck_label.config(text=deck_label.card_name + ' x2')
         else:
+            if len(set(self.deck_frame.deck_list)) % 2 == 0:
+                bg = 'grey'
+            else:
+                bg = None
+            deck_label = DeckLabel(master=self.deck_frame, image=None, text=card_label.card_name, bg=bg)
+            def handler(event, deck_label=deck_label):
+                return self.remove_from_deck(event, deck_label)
+            deck_label.bind('<Button-1>', handler)
             deck_label.grid()
-        self.deck_frame.deck_list.append(card.name)
+        self.deck_frame.deck_list.append(card_label.card_name)
     
+    def remove_from_deck(self, event, deck_label):
+        if ' x2' in deck_label.config()['text'][-1]:
+            new_text = deck_label.config()['text'][-1].replace(' x2', '')
+            deck_label.config(text=new_text)
+        else:
+            deck_label.destroy()
+        self.deck_frame.deck_list.remove(deck_label.card_name)
+        
     def save_deck(self, event):
         #Check if deck is complete
         if self.deck_frame.deck_list < Config.MAX_CARDS_IN_DECK:
@@ -152,14 +166,15 @@ class HSDeckBuilder(Frame):
         path = '%s\%s.txt' % (Config.DECK_PATH, deck_name)
         count = 1
         while os.path.isfile(path):
-            path = '%s\%s-00%d.txt' % (Config.DECK_PATH, deck_name, count)
+            path = '%s\%s-%03d.txt' % (Config.DECK_PATH, deck_name, count)
             count = count + 1
         
         #Create content of deck file and write it
         content_name = 'Deck: %s\n\n' % (deck_name)
         content_deck = ['    -'+s for s in self.deck_frame.deck_list]
         content_deck = '\n'.join(content_deck)
-        with open(path, 'a') as myFile:
+        print 'Saving deck to %s' % os.path.abspath(path)
+        with open(path, 'w') as myFile:
             myFile.write(content_name)
             myFile.write(content_deck)
         

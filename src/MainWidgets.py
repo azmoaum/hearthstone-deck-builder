@@ -7,9 +7,9 @@ class CardsFrame(LabelFrame):
         self.page = 1    
 
 class CardLabel(Label):
-    def __init__(self, master=None, image=None, name=None):
+    def __init__(self, master=None, image=None, text=None):
         Label.__init__(self, master=master, image=image)
-        self.name = name
+        self.card_name = text
         
 class DeckFrame(LabelFrame):
     def __init__(self, width, height, master=None):
@@ -17,9 +17,9 @@ class DeckFrame(LabelFrame):
         self.deck_list = []
         
 class DeckLabel(Label):
-    def __init__(self, master=None, image=None, text=None):
-        Label.__init__(self, master=master, image=image, text=text)
-        self.text = text
+    def __init__(self, master=None, image=None, text=None, bg=None):
+        Label.__init__(self, master=master, image=image, text=text, bg=bg)
+        self.card_name = text
 
 class HeroButtonsFrame(LabelFrame):
     def __init__(self, master=None):
