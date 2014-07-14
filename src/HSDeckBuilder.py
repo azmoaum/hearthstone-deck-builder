@@ -113,6 +113,7 @@ class HSDeckBuilder(Frame):
         for x in range(0, Config.MAX_CARDS_PER_PAGE):
             if x < cards_to_display:
                 self.card_labels[x].card_name = card_list[x]['name']
+                self.card_labels[x].card_rarity = card_list[x]['rarity']
                 self.display_card_image(card_list[x]['image'], x) 
             else:
                 self.display_card_image('', x)
@@ -127,6 +128,9 @@ class HSDeckBuilder(Frame):
         if len(deck_labels) == Config.MAX_CARDS_IN_DECK:
             return
         if self.deck_frame.deck_list.count(card_label.card_name) == 2:
+            return
+        if (self.deck_frame.deck_list.count(card_label.card_name) == 1 and
+                                    card_label.card_rarity == 'Legendary'):
             return
         
         #Check if card is already in the deck. If so, loop through
