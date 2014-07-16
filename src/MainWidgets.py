@@ -9,8 +9,7 @@ class CardsFrame(LabelFrame):
 class CardLabel(Label):
     def __init__(self, master=None, image=None, text=None):
         Label.__init__(self, master=master, image=image)
-        self.card_name = text
-        self.card_rarity = None
+        self.card = None
         
 class DeckFrame(LabelFrame):
     def __init__(self, width, height, master=None):

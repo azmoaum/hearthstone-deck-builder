@@ -1,4 +1,4 @@
-HERO_CLASSES = ['Druid']#, 'Mage', 'Warlock']#, 'Hunter', 'Priest', 'Paladin', 'Rogue', 'Shaman', 'Warrior']
+HERO_CLASSES = ['Druid']#, 'Hunter', 'Mage', 'Paladin', 'Priest', 'Rogue', 'Shaman', 'Warlock', 'Warrior']
 
 CARD_SETS = ['Basic', 'Expert']
 
@@ -12,9 +12,9 @@ CARDS_TO_IGNORE = ['CS2_013t', 'EX1_573t', 'EX1_158t', 'EX1_160t', 'CS2_017', 'E
                     ]
                     
 #Cards and Pages
-MAX_CARDS_PER_ROW = 4
+MAX_CARD_LABELS_PER_ROW = 4
 MAX_ROWS_PER_PAGE = 2
-MAX_CARDS_PER_PAGE = MAX_CARDS_PER_ROW*MAX_ROWS_PER_PAGE
+MAX_CARD_LABELS_PER_PAGE = MAX_CARD_LABELS_PER_ROW*MAX_ROWS_PER_PAGE
 MAX_PAGES = 4
 MAX_CARDS_IN_DECK = 30
 
