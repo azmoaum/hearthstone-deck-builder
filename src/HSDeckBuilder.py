@@ -188,7 +188,24 @@ class HSDeckBuilder(Frame):
             myFile.write(content_deck)
     
     def load_decks(self, event):
-        print 'loading decks'
+        deck_files = [file for file in os.listdir(Config.DECK_PATH)]
+        
+        for file in deck_files:
+            deck_loader_label = DeckLabel(master=self.deck_loader_frame, image=None, text=file)
+            def handler(event, deck_loader_label=deck_loader_label):
+                return self.load_deck(event, deck_loader_label)
+            deck_loader_label.bind('<Button-1>', handler)
+            deck_loader_label.grid()
+        print deck_files
+    
+    def load_deck(self, event, deck_loader_label):
+        deck_fname = deck_loader_label.config()['text'][-1]
+        path = '%s\%s' % (Config.DECK_PATH, deck_fname)
+        with open(path) as f:
+            content = [l.strip().replace('-','') for l in f.readlines()]
+            
+        for x in content:
+            print x
         
 def load_cards(session):
     card_dict = {}
