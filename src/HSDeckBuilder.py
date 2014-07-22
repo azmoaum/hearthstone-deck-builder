@@ -3,7 +3,7 @@
 import json
 import os.path
 import Config
-from MainWidgets import HeroButtonsFrame, CardsFrame, DeckFrame, DeckLabel, CardLabel
+from MainWidgets import HeroButtonsFrame, CardsFrame, DeckMakerFrame, DeckLabel, CardLabel
 from Tkinter import Frame, Button, Entry
 from requests import Session
 from PIL import Image, ImageTk
@@ -14,8 +14,7 @@ class HSDeckBuilder(Frame):
     def __init__(self, session, master=None):
         Frame.__init__(self, master=master)
         self.master.title('HSDeckBuilder')
-        self.pack_propagate(0)
-        
+        self.pack_propagate(0)   
         #card_dict = Dictionary of hero classes with their associated card lists
         card_dict = load_cards(session)
         self.create_widgets(card_dict)
@@ -38,13 +37,6 @@ class HSDeckBuilder(Frame):
                 card_label.bind('<Button-1>', handler)
                 card_label.grid(column=y, row=x)
         self.card_labels = self.cards_frame.winfo_children()    
-        
-        #Create DeckFrame
-        self.deck_frame = DeckFrame(master=self.master, 
-                                    width=150,
-                                    height=Config.CARD_LABEL_HEIGHT*2)
-        self.deck_frame.grid_propagate(False)
-        self.deck_frame.grid(column=3, row=1, rowspan=2)
                 
         #Create HeroButtonsFrame
         self.hero_buttons = HeroButtonsFrame(master=self.master)
@@ -91,14 +83,31 @@ class HSDeckBuilder(Frame):
         
         #Create Save Button
         self.save_button = Button(master=self.master, text='Save Deck')
-        def handler(event):
-            return self.save_deck(event)
-        self.save_button.bind('<Button-1>', handler)
+        self.save_button.bind('<Button-1>', self.save_deck)
         self.save_button.grid(column=3,row=4)
+   
+        #Create DeckMakerFrame
+        self.deck_maker_frame = DeckMakerFrame(master=self.master, 
+                                    width=150,
+                                    height=Config.CARD_LABEL_HEIGHT*2)
+        self.deck_maker_frame.grid_propagate(False)
+        self.deck_maker_frame.grid(column=3, row=1, rowspan=2)
         
-        #Create Deck Name Entry
+        #Create DeckName Entry
         self.deck_name_entry = Entry(master=self.master, text='Deck name')
         self.deck_name_entry.grid(column=3,row=0)
+        
+        #Create DeckLoaderFrame
+        self.deck_loader_frame = DeckMakerFrame(master=self.master, 
+                                    width=150,
+                                    height=Config.CARD_LABEL_HEIGHT*2)
+        self.deck_loader_frame.grid_propagate(False)
+        self.deck_loader_frame.grid(column=4, row=1, rowspan=2)
+        
+        #Create LoadDecks Entry
+        self.load_decks_button = Button(master=self.master, text='Load Decks')
+        self.load_decks_button.bind('<Button-1>', self.load_decks)
+        self.load_decks_button.grid(column=4,row=0)
         
     def populate_card_labels(self, card_dict, event=None):
         #List of cards to assign to card labels, depending on the hero and page
@@ -119,12 +128,12 @@ class HSDeckBuilder(Frame):
                 self.card_labels[x].image = ''
     
     def add_to_deck(self, event, card_label):
-        deck_labels = self.deck_frame.winfo_children()
-        if len(self.deck_frame.deck_list) == Config.MAX_CARDS_IN_DECK:
+        deck_labels = self.deck_maker_frame.winfo_children()
+        if len(self.deck_maker_frame.deck_list) == Config.MAX_CARDS_IN_DECK:
             return
-        if self.deck_frame.deck_list.count(card_label.card['name']) == 2:
+        if self.deck_maker_frame.deck_list.count(card_label.card['name']) == 2:
             return
-        if (self.deck_frame.deck_list.count(card_label.card['name']) == 1 and
+        if (self.deck_maker_frame.deck_list.count(card_label.card['name']) == 1 and
                                     card_label.card['rarity'] == 'Legendary'):
             return
         
@@ -132,21 +141,21 @@ class HSDeckBuilder(Frame):
         #Check if card is already in the deck. If so, loop through
         #all the deck labels and add 'x2' to the label. Else
         #create a deck label for the new card
-        if card_label.card['name'] in self.deck_frame.deck_list:
+        if card_label.card['name'] in self.deck_maker_frame.deck_list:
            for deck_label in deck_labels:
                 if deck_label.card_name == card_label.card['name']:
                     deck_label.config(text=deck_label.card_name+' x2')
         else:
-            if len(set(self.deck_frame.deck_list)) % 2 == 0:
+            if len(set(self.deck_maker_frame.deck_list)) % 2 == 0:
                 bg = 'grey'
             else:
                 bg = None
-            deck_label = DeckLabel(master=self.deck_frame, image=None, text=card_label.card['name'], bg=bg)
+            deck_label = DeckLabel(master=self.deck_maker_frame, image=None, text=card_label.card['name'], bg=bg)
             def handler(event, deck_label=deck_label):
                 return self.remove_from_deck(event, deck_label)
             deck_label.bind('<Button-1>', handler)
             deck_label.grid()
-        self.deck_frame.deck_list.append(card_label.card['name'])
+        self.deck_maker_frame.deck_list.append(card_label.card['name'])
     
     def remove_from_deck(self, event, deck_label):
         if ' x2' in deck_label.config()['text'][-1]:
@@ -154,11 +163,11 @@ class HSDeckBuilder(Frame):
             deck_label.config(text=new_text)
         else:
             deck_label.destroy()
-        self.deck_frame.deck_list.remove(deck_label.card_name)
+        self.deck_maker_frame.deck_list.remove(deck_label.card_name)
         
     def save_deck(self, event):
         #Check if deck is complete
-        if self.deck_frame.deck_list < Config.MAX_CARDS_IN_DECK:
+        if self.deck_maker_frame.deck_list < Config.MAX_CARDS_IN_DECK:
             return
         deck_name = self.deck_name_entry.get()
         
@@ -171,12 +180,15 @@ class HSDeckBuilder(Frame):
         
         #Create content of deck file and write it
         content_name = 'Deck: %s\n\n' % (deck_name)
-        content_deck = ['    -'+s for s in self.deck_frame.deck_list]
+        content_deck = ['    -'+s for s in self.deck_maker_frame.deck_list]
         content_deck = '\n'.join(content_deck)
         print 'Saving deck to %s' % os.path.abspath(path)
         with open(path, 'w') as myFile:
             myFile.write(content_name)
             myFile.write(content_deck)
+    
+    def load_decks(self, event):
+        print 'loading decks'
         
 def load_cards(session):
     card_dict = {}
