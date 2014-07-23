@@ -15,6 +15,7 @@ class HSDeckBuilder(Frame):
         Frame.__init__(self, master=master)
         self.master.title('HSDeckBuilder')
         self.pack_propagate(0)   
+        
         #card_dict = Dictionary of hero classes with their associated card lists
         card_dict = load_cards(session)
         self.create_widgets(card_dict)
@@ -33,7 +34,10 @@ class HSDeckBuilder(Frame):
             for y in range(1, Config.MAX_CARD_LABELS_PER_ROW+1):
                 card_label = CardLabel(master=self.cards_frame, image=None)
                 def handler(event, card_label=card_label):
-                   return self.add_to_deck(event, card_label)
+                    if (card_label.card['rarity'] == 'Legendary' and
+                        self.deck_maker_frame.deck_list.count(card_label.card['name']) == 1):
+                            return;
+                    return self.add_to_deck(event, card_label.card['name'])
                 card_label.bind('<Button-1>', handler)
                 card_label.grid(column=y, row=x)
         self.card_labels = self.cards_frame.winfo_children()    
@@ -127,35 +131,31 @@ class HSDeckBuilder(Frame):
                 self.card_labels[x].config(image = '')
                 self.card_labels[x].image = ''
     
-    def add_to_deck(self, event, card_label):
+    def add_to_deck(self, event, card_name):
         deck_labels = self.deck_maker_frame.winfo_children()
         if len(self.deck_maker_frame.deck_list) == Config.MAX_CARDS_IN_DECK:
             return
-        if self.deck_maker_frame.deck_list.count(card_label.card['name']) == 2:
+        if self.deck_maker_frame.deck_list.count(card_name) == 2:
             return
-        if (self.deck_maker_frame.deck_list.count(card_label.card['name']) == 1 and
-                                    card_label.card['rarity'] == 'Legendary'):
-            return
-        
-        
+           
         #Check if card is already in the deck. If so, loop through
         #all the deck labels and add 'x2' to the label. Else
         #create a deck label for the new card
-        if card_label.card['name'] in self.deck_maker_frame.deck_list:
-           for deck_label in deck_labels:
-                if deck_label.card_name == card_label.card['name']:
-                    deck_label.config(text=deck_label.card_name+' x2')
+        if card_name in self.deck_maker_frame.deck_list:
+           for label in deck_labels:
+                if label.card_name == card_name:
+                    label.config(text=label.card_name+' x2')
         else:
             if len(set(self.deck_maker_frame.deck_list)) % 2 == 0:
                 bg = 'grey'
             else:
                 bg = None
-            deck_label = DeckLabel(master=self.deck_maker_frame, image=None, text=card_label.card['name'], bg=bg)
+            deck_label = DeckLabel(master=self.deck_maker_frame, image=None, text=card_name, bg=bg)
             def handler(event, deck_label=deck_label):
                 return self.remove_from_deck(event, deck_label)
             deck_label.bind('<Button-1>', handler)
             deck_label.grid()
-        self.deck_maker_frame.deck_list.append(card_label.card['name'])
+        self.deck_maker_frame.deck_list.append(card_name)
     
     def remove_from_deck(self, event, deck_label):
         if ' x2' in deck_label.config()['text'][-1]:
@@ -199,13 +199,18 @@ class HSDeckBuilder(Frame):
         print deck_files
     
     def load_deck(self, event, deck_loader_label):
-        deck_fname = deck_loader_label.config()['text'][-1]
-        path = '%s\%s' % (Config.DECK_PATH, deck_fname)
+        path = '%s\%s' % (Config.DECK_PATH, deck_loader_label.config()['text'][-1])
+        
         with open(path) as f:
             content = [l.strip().replace('-','') for l in f.readlines()]
-            
+            content = content[2:]
+
+        del self.deck_maker_frame.deck_list[:]
+        for label in self.deck_maker_frame.winfo_children():
+            label.destroy()
+
         for x in content:
-            print x
+            self.add_to_deck(event, x)
         
 def load_cards(session):
     card_dict = {}
